@@ -825,6 +825,17 @@ def handler(job):
     job_input = job["input"]
     job_id = job["id"]
 
+    # Cheap path for RunPod Hub validation (.runpod/tests.json) and manual pings — confirms
+    # the container booted and ComfyUI's HTTP API is reachable, without running a real
+    # (expensive) generation. Patched in locally; not part of the upstream handler.
+    if job_input.get("health_check"):
+        ok = check_server(
+            f"http://{COMFY_HOST}",
+            COMFY_API_AVAILABLE_MAX_RETRIES,
+            COMFY_API_AVAILABLE_INTERVAL_MS,
+        )
+        return {"status": "healthy" if ok else "unhealthy"}
+
     # Make sure that the input is valid
     validated_data, error_message = validate_input(job_input)
     if error_message:

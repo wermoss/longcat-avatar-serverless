@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "worker_health_check",
+      "input": {
+        "health_check": true
+      },
+      "timeout": 120000
+    }
+  ],
+  "config": {
+    "gpuTypeId": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "gpuCount": 1,
+    "allowedCudaVersions": ["12.8", "13.0"]
+  }
+}

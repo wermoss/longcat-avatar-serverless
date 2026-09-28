@@ -1,0 +1,25 @@
+{
+  "title": "LongCat Avatar 1.5 ComfyUI Worker",
+  "description": "Photo + audio -> lip-synced avatar video (LongCat-Video-Avatar 1.5 via Kijai's ComfyUI-WanVideoWrapper), single-GPU",
+  "type": "serverless",
+  "category": "video",
+  "config": {
+    "runsOn": "GPU",
+    "containerDiskInGb": 60,
+    "gpuIds": "BLACKWELL_96",
+    "gpuCount": 1,
+    "allowedCudaVersions": ["12.8", "13.0"],
+    "env": [
+      {
+        "key": "COMFY_LOG_LEVEL",
+        "input": {
+          "name": "ComfyUI Log Level",
+          "type": "string",
+          "description": "Log level for ComfyUI (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+          "default": "INFO",
+          "advanced": true
+        }
+      }
+    ]
+  }
+}
