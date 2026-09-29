@@ -33,9 +33,18 @@ ENV PATH="/opt/venv/bin:${PATH}"
 RUN uv pip install comfy-cli==1.13.0 pip setuptools wheel
 RUN /usr/bin/yes | comfy --workspace /comfyui install --version "${COMFYUI_VERSION}" --cuda-version "${CUDA_VERSION_FOR_COMFY}" --nvidia
 
+# Cache-bust: RunPod's Hub build cache is keyed per-repo, not per-commit — every RUN line
+# below this point stayed byte-identical across v0.1.0-v0.1.3, so a corrupted layer from the
+# very first build attempt (torch silently missing at runtime despite the build reporting
+# success — confirmed via test logs 2026-09-29: "ModuleNotFoundError: No module named 'torch'")
+# kept getting reused instead of re-executed. Bump this on any future "build succeeds, runtime
+# is broken anyway" mystery instead of assuming the Dockerfile logic itself is wrong.
+ARG CACHE_BUST=1
+
 # LongCat Avatar's three custom node packages (all confirmed working together against
 # the official example workflow — see workflow_api.json / longcat-serverless R&D 2026-09-28).
 WORKDIR /comfyui/custom_nodes
+RUN echo "cache-bust ${CACHE_BUST}"
 RUN git clone --depth 1 https://github.com/kijai/ComfyUI-WanVideoWrapper.git \
     && git clone --depth 1 https://github.com/kijai/ComfyUI-MelBandRoFormer.git \
     && git clone --depth 1 https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git
@@ -47,6 +56,12 @@ RUN uv pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 \
          [ -f "$r" ] && uv pip install -r "$r" || true; \
        done \
     && uv pip install "transformers>=4.50.3,<5" "huggingface-hub<1.0"
+
+# Loud, build-breaking check that torch actually landed where start.sh's GPU pre-flight check
+# (python3 -c "import torch...") will look for it. Catches a silently-broken install HERE, at
+# build time, instead of 20+ minutes later when a live GPU test/job fails with a runtime-only
+# "ModuleNotFoundError: No module named 'torch'" and no indication the build itself was at fault.
+RUN python3 -c "import torch; print(f'torch {torch.__version__} present, cuda build: {torch.version.cuda}')"
 
 # Build-time smoke test: catches a startup-breaking import error here, not on a live worker.
 # Bounded to 60s and made non-fatal (`|| true`) — verified by hand (2026-09-29, debug pod) that
