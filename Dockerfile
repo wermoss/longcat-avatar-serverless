@@ -29,6 +29,14 @@ RUN wget -qO- https://astral.sh/uv/install.sh | sh \
     && ln -s /root/.local/bin/uvx /usr/local/bin/uvx \
     && uv venv /opt/venv
 ENV PATH="/opt/venv/bin:${PATH}"
+# uv picks a venv by walking up from the CWD looking for a .venv directory *before* it ever
+# looks at PATH. comfy-cli creates its own venv at /comfyui/.venv as a side effect of its own
+# install step below, and once WORKDIR later moves under /comfyui/ (for our custom-node git
+# clones), every subsequent `uv pip install` silently lands in THAT venv instead of this one —
+# torch installs "successfully" but into a venv nothing on PATH ever looks at. Pin VIRTUAL_ENV
+# explicitly so uv's target is unambiguous regardless of CWD (confirmed root cause 2026-09-29:
+# build log showed "Using Python 3.12.3 environment at: /comfyui/.venv" for the torch install).
+ENV VIRTUAL_ENV=/opt/venv
 
 RUN uv pip install comfy-cli==1.13.0 pip setuptools wheel
 RUN /usr/bin/yes | comfy --workspace /comfyui install --version "${COMFYUI_VERSION}" --cuda-version "${CUDA_VERSION_FOR_COMFY}" --nvidia
