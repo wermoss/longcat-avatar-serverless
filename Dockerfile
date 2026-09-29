@@ -55,7 +55,8 @@ WORKDIR /comfyui/custom_nodes
 RUN echo "cache-bust ${CACHE_BUST}"
 RUN git clone --depth 1 https://github.com/kijai/ComfyUI-WanVideoWrapper.git \
     && git clone --depth 1 https://github.com/kijai/ComfyUI-MelBandRoFormer.git \
-    && git clone --depth 1 https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git
+    && git clone --depth 1 https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git \
+    && git clone --depth 1 https://github.com/kijai/ComfyUI-KJNodes.git
 
 RUN uv pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 \
       --index-url https://download.pytorch.org/whl/cu128 \
